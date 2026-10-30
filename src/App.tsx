@@ -7,8 +7,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   BookOpen,
   Compass,
-  RotateCw,
-  Smartphone,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -21,6 +19,7 @@ import {
 import { JournalModal } from './components/JournalModal';
 import { NoteModal } from './components/NoteModal';
 import { VictoryModal } from './components/VictoryModal';
+import { WelcomeModal } from './components/WelcomeModal';
 import {
   INTERACT_RADIUS,
   LightingMode,
@@ -36,56 +35,6 @@ import { soundEngine } from './utils/soundEngine';
 const STORAGE_KEY = 'halloween_in_japan_discovered_notes_v1';
 
 export default function App() {
-  // Mobile landscape enforcement state
-  const [isPortraitMobile, setIsPortraitMobile] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const isTouchOrMobile = window.innerWidth <= 1024 || 'ontouchstart' in window;
-    const isPortrait = window.innerHeight > window.innerWidth;
-    return isTouchOrMobile && isPortrait;
-  });
-
-  // Automatically request screen orientation lock to landscape if supported
-  useEffect(() => {
-    const tryLockLandscape = async () => {
-      try {
-        if (window.screen?.orientation && 'lock' in window.screen.orientation) {
-          await (window.screen.orientation as unknown as { lock: (orient: string) => Promise<void> })
-            .lock('landscape')
-            .catch(() => {});
-        }
-      } catch {}
-    };
-
-    tryLockLandscape();
-
-    const checkOrientation = () => {
-      const isTouchOrMobile = window.innerWidth <= 1024 || 'ontouchstart' in window;
-      const isPortrait = window.innerHeight > window.innerWidth;
-      setIsPortraitMobile(isTouchOrMobile && isPortrait);
-      tryLockLandscape();
-    };
-
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
-    return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
-    };
-  }, []);
-
-  const handleForceLandscape = async () => {
-    try {
-      if (document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen().catch(() => {});
-      }
-      if (window.screen?.orientation && 'lock' in window.screen.orientation) {
-        await (window.screen.orientation as unknown as { lock: (orient: string) => Promise<void> })
-          .lock('landscape')
-          .catch(() => {});
-      }
-    } catch {}
-  };
-
   // Persistent discovered note IDs (1..10)
   const [discoveredNoteIds, setDiscoveredNoteIds] = useState<number[]>(() => {
     try {
@@ -120,10 +69,19 @@ export default function App() {
   }, [droneEnabled]);
 
   // Active modals
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(true);
   const [activeNoteObject, setActiveNoteObject] = useState<WorldObject | null>(null);
   const [isNewDiscovery, setIsNewDiscovery] = useState<boolean>(false);
   const [isJournalOpen, setIsJournalOpen] = useState<boolean>(false);
   const [isVictoryOpen, setIsVictoryOpen] = useState<boolean>(false);
+
+  const handleStartGame = useCallback(() => {
+    setIsWelcomeOpen(false);
+    soundEngine.ensureContext();
+    if (droneEnabled) {
+      soundEngine.toggleDrone(true);
+    }
+  }, [droneEnabled]);
 
   // React state mirrored for subtle HUD status
   const [playerPos, setPlayerPos] = useState<{ x: number; y: number }>({
@@ -484,12 +442,64 @@ export default function App() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [lighting, inspectObject]);
 
+  // Mobile device and orientation detection
+  const [deviceInfo, setDeviceInfo] = useState<{
+    isMobile: boolean;
+    isPortrait: boolean;
+  }>({
+    isMobile: false,
+    isPortrait: false,
+  });
+
+  useEffect(() => {
+    const checkDevice = () => {
+      if (typeof window === 'undefined') return;
+      const isTouch = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+      const isSmallScreen = window.innerWidth < 1024 || window.innerHeight < 600;
+      const isMobile = isTouch || isSmallScreen;
+      const isPortrait = isMobile && window.innerHeight > window.innerWidth;
+      setDeviceInfo({ isMobile, isPortrait });
+    };
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    window.addEventListener('orientationchange', checkDevice);
+    return () => {
+      window.removeEventListener('resize', checkDevice);
+      window.removeEventListener('orientationchange', checkDevice);
+    };
+  }, []);
+
   const handleToggleDrone = () => {
     const nextDrone = !droneEnabled;
     setDroneEnabled(nextDrone);
     soundEngine.toggleDrone(nextDrone);
   };
 
+  // ===================================================================
+  // 1. MOBILE PORTRAIT MODE: Game is NOT visible. ONLY rotation prompt.
+  // ===================================================================
+  if (deviceInfo.isMobile && deviceInfo.isPortrait) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#110e19] text-amber-50 p-6 text-center select-none">
+        <div className="max-w-xs sm:max-w-sm flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-pink-500/50 bg-[#1a1528] shadow-[0_0_35px_rgba(244,114,182,0.3)] backdrop-blur-md">
+          <span className="text-5xl animate-bounce" role="img" aria-label="Rotate device to landscape">
+            📱🔄
+          </span>
+          <h2 className="font-arcade text-xs sm:text-sm text-pink-300 tracking-wider">
+            PLEASE ROTATE YOUR DEVICE
+          </h2>
+          <p className="text-xs text-amber-200/90 leading-relaxed font-note">
+            Shaily's Midnight Matsuri is a landscape-only game. Please turn your phone sideways to play!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ===================================================================
+  // 2. MAIN APP VIEW (Mobile Landscape & Desktop)
+  // ===================================================================
   return (
     <div
       className="h-screen w-screen max-h-screen overflow-hidden bg-[#14111d] text-amber-50 flex flex-col justify-between select-none"
@@ -497,66 +507,108 @@ export default function App() {
       data-discovered-notes={discoveredNoteIds.length}
     >
       {/* ===================================================================
-          SLEEK TOP BAR: IMMERSIVE TWILIGHT RETRO ARCADE HEADER
+          FIXED TOP HEADER
          =================================================================== */}
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-pink-500/20 bg-[#110e19]/95 px-3 py-1.5 sm:px-5 sm:py-2">
-        {/* Zone 1: Title in sunset twilight pink palette */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="font-arcade text-xs sm:text-sm tracking-wide text-pink-300 drop-shadow-[0_2px_8px_rgba(244,114,182,0.45)] whitespace-nowrap">
+      <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-1.5 sm:gap-2 border-b border-pink-500/20 bg-[#110e19]/95 px-2.5 py-2 sm:px-5 sm:py-2 w-full">
+        {/* Title */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <span className="font-arcade text-[10px] sm:text-sm tracking-tight sm:tracking-wide text-pink-300 drop-shadow-[0_2px_8px_rgba(244,114,182,0.45)] whitespace-nowrap">
             Shaily's Midnight Matsuri
           </span>
-          <span className="text-pink-400 font-bold select-none text-xs sm:text-sm">·</span>
-          <span className="font-jp-pixel text-xs sm:text-sm tracking-wide text-pink-300 drop-shadow-[0_2px_8px_rgba(244,114,182,0.45)] whitespace-nowrap">
+          <span className="text-pink-400 font-bold select-none text-xs sm:text-sm hidden md:inline">·</span>
+          <span className="font-jp-pixel text-xs sm:text-sm tracking-wide text-pink-300 drop-shadow-[0_2px_8px_rgba(244,114,182,0.45)] whitespace-nowrap hidden md:inline">
             シェイリーの真夜中祭り
           </span>
         </div>
 
-        {/* Zone 2: BGM and Notes Journal */}
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={handleToggleDrone}
-            aria-label="Toggle BGM"
-            title="Toggle BGM"
-            className={`arcade-btn flex items-center gap-1 rounded-lg border px-2.5 py-1 font-arcade text-[9px] whitespace-nowrap transition-colors ${
-              droneEnabled
-                ? 'border-pink-400/70 bg-pink-950/80 text-pink-200 shadow-[0_0_10px_rgba(244,114,182,0.35)]'
-                : 'border-amber-500/20 bg-[#1b1726] text-amber-200/60 hover:text-white'
-            }`}
-          >
-            <Sparkles className={`h-3 w-3 text-pink-300 ${droneEnabled ? 'animate-pulse' : 'opacity-60'}`} />
-            <span>BGM {droneEnabled ? 'ON' : 'OFF'}</span>
-          </button>
+        {/* Action Controls: Mobile Landscape (Emoji Icons) vs Desktop (Text Buttons) */}
+        {deviceInfo.isMobile ? (
+          /* Mobile Landscape Emoji Header Buttons ONLY */
+          <div className="flex shrink-0 items-center gap-2">
+            {/* BGM Emoji Button */}
+            <button
+              type="button"
+              onClick={handleToggleDrone}
+              aria-label={`Toggle BGM (currently ${droneEnabled ? 'ON' : 'OFF'})`}
+              title={`BGM ${droneEnabled ? 'ON' : 'OFF'}`}
+              className={`arcade-btn flex h-8 w-8 items-center justify-center rounded-lg border text-sm transition-all ${
+                droneEnabled
+                  ? 'border-pink-400/80 bg-pink-950/90 text-pink-200 shadow-[0_0_8px_rgba(244,114,182,0.4)]'
+                  : 'border-amber-500/20 bg-[#1b1726] opacity-60 text-amber-200/60'
+              }`}
+            >
+              <span aria-hidden="true">{droneEnabled ? '🎵' : '🔇'}</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsJournalOpen(true)}
-            className="arcade-btn flex items-center gap-1.5 rounded-lg bg-[#7c2d12] px-3 py-1 font-arcade text-[10px] text-amber-200/90 hover:bg-[#6c2308] hover:text-white transition-colors whitespace-nowrap"
-          >
-            <BookOpen className="h-3.5 w-3.5 text-amber-300/80" />
-            <span className="tabular-nums">NOTES ({discoveredNoteIds.length}/10)</span>
-          </button>
-        </div>
+            {/* Notes Journal Emoji Button with Count */}
+            <button
+              type="button"
+              onClick={() => setIsJournalOpen(true)}
+              aria-label={`Open Notes Journal (${discoveredNoteIds.length} of 10 found)`}
+              title="Open Notes Journal"
+              className="arcade-btn flex items-center gap-1 rounded-lg border border-amber-500/40 bg-[#7c2d12] px-2 py-1 font-arcade text-[9px] text-amber-100 shadow-[0_0_8px_rgba(180,83,9,0.3)] whitespace-nowrap"
+            >
+              <span aria-hidden="true" className="text-sm">📜</span>
+              <span className="tabular-nums font-bold text-[10px]">{discoveredNoteIds.length}/10</span>
+            </button>
+
+            {/* Reset Game Emoji Button next to Notes */}
+            <button
+              type="button"
+              onClick={handleResetGame}
+              aria-label="Reset game"
+              title="Reset game and notes to 0"
+              className="arcade-btn flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/40 bg-rose-950/80 text-sm text-rose-200 shadow-[0_0_8px_rgba(244,63,94,0.3)] hover:bg-rose-900 active:scale-95 transition-transform"
+            >
+              <span aria-hidden="true">🔄</span>
+            </button>
+          </div>
+        ) : (
+          /* Desktop Header Actions (UNCHANGED) */
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={handleToggleDrone}
+              aria-label="Toggle BGM"
+              title="Toggle BGM"
+              className={`arcade-btn flex items-center gap-1 rounded-lg border px-1.5 py-1 sm:px-2.5 font-arcade text-[8px] sm:text-[9px] whitespace-nowrap transition-colors ${
+                droneEnabled
+                  ? 'border-pink-400/70 bg-pink-950/80 text-pink-200 shadow-[0_0_10px_rgba(244,114,182,0.35)]'
+                  : 'border-amber-500/20 bg-[#1b1726] text-amber-200/60 hover:text-white'
+              }`}
+            >
+              <Sparkles className={`h-3 w-3 text-pink-300 ${droneEnabled ? 'animate-pulse' : 'opacity-60'}`} />
+              <span>BGM {droneEnabled ? 'ON' : 'OFF'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsJournalOpen(true)}
+              className="arcade-btn flex items-center gap-1 sm:gap-1.5 rounded-lg bg-[#7c2d12] px-2 py-1 sm:px-3 font-arcade text-[8px] sm:text-[10px] text-amber-200/90 hover:bg-[#6c2308] hover:text-white transition-colors whitespace-nowrap shrink-0"
+            >
+              <BookOpen className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300/80" />
+              <span className="tabular-nums">NOTES ({discoveredNoteIds.length}/10)</span>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ===================================================================
-          MAIN WORKSPACE: 16-BIT PIXEL-ART WORLD FRAME (EXPANDED SCALE)
+          MAIN WORKSPACE: FULL WIDTH PAN CANVAS (Vertically Scrollable)
          =================================================================== */}
-      <main className="flex-1 min-h-0 flex flex-col items-center justify-center p-1 sm:p-2 overflow-hidden w-full">
+      <main className="flex-1 min-h-0 flex flex-col items-center justify-start sm:justify-center p-0 sm:p-2 pb-12 sm:pb-2 overflow-y-auto overflow-x-hidden w-full custom-scrollbar">
         <section
           id="world"
           aria-label="Interactive 16-Bit Shōwa Tokyo World"
-          className="relative flex flex-col items-center justify-center w-full h-full max-h-full"
+          className="relative flex flex-col items-center justify-start sm:justify-center w-full my-0 sm:my-auto"
         >
-          {/* Curved Screen Viewport with Single Thin Orange Border (1000x720) */}
+          {/* Canvas Viewport */}
           <div
-            className="relative rounded-xl border border-amber-500/35 bg-[#14111d] shadow-[0_16px_50px_rgba(0,0,0,0.85)] overflow-hidden"
-            style={{
-              aspectRatio: '1000 / 720',
-              maxHeight: 'calc(100vh - 84px)',
-              maxWidth: 'calc((100vh - 84px) * (1000 / 720))',
-              width: '100%',
-            }}
+            className={`relative overflow-hidden w-full bg-[#14111d] ${
+              deviceInfo.isMobile
+                ? 'aspect-[1000/720] rounded-none border-y border-amber-500/35 shadow-none'
+                : 'rounded-xl border border-amber-500/35 shadow-[0_16px_50px_rgba(0,0,0,0.85)] max-w-[1000px] aspect-[1000/720] max-h-[calc(100vh-96px)] max-w-[calc((100vh-96px)*(1000/720))]'
+            }`}
           >
             <canvas
               ref={canvasRef}
@@ -564,56 +616,69 @@ export default function App() {
               height={WORLD_HEIGHT}
               onClick={handleCanvasClick}
               data-testid="halloween-world-canvas"
-              aria-label="Interactive 2D explorable canvas. Use WASD, Arrow keys, or click anywhere to walk and inspect objects."
-              className="pixelated-canvas block h-full w-full cursor-pointer"
+              aria-label="Interactive 2D explorable canvas. Tap anywhere to walk and inspect objects."
+              className="pixelated-canvas block h-full w-full cursor-pointer touch-pan-y"
             />
 
             {/* Permanent CRT Scanlines & Curved Screen Vignette */}
             <div
               aria-hidden="true"
-              className="crt-scanlines crt-curvature pointer-events-none absolute inset-0 rounded-xl"
+              className="crt-scanlines crt-curvature pointer-events-none absolute inset-0 rounded-none sm:rounded-xl"
             />
           </div>
-
-          {/* Sleek Integrated Status Strip Inside Bezel */}
-          <div className="shrink-0 mt-1 flex w-full max-w-[1000px] items-center justify-between px-2 text-[10px] sm:text-xs text-amber-200/80">
-            <div className="flex items-center gap-2 truncate">
-              <Compass className="h-3 w-3 shrink-0 text-orange-400" />
-              <span className="font-arcade text-[8px] tabular-nums text-amber-300/90">
-                ({playerPos.x}, {playerPos.y})
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="truncate">
-                {nearbyObject ? (
-                  <>
-                    <strong className="text-pink-300">
-                      Near: {nearbyObject.name}
-                    </strong>
-                    <span className="text-amber-300/80"> · press [space] to inspect</span>
-                  </>
-                ) : (
-                  'arrows or click to walk . press [space] to inspect'
-                )}
-              </span>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={handleResetGame}
-                className="arcade-btn px-2.5 py-0.5 rounded text-[9px] font-arcade tracking-wider text-rose-300/80 hover:text-rose-100 hover:bg-rose-950/70 border border-rose-500/30 transition-colors uppercase"
-                title="Reset game and set notes found to 0"
-              >
-                RESET GAME
-              </button>
-            </div>
-          </div>
         </section>
+
+        {/* Extra bottom space below canvas bottom line on mobile (same height as header) */}
+        {deviceInfo.isMobile && (
+          <div className="h-12 w-full shrink-0" aria-hidden="true" />
+        )}
       </main>
 
       {/* ===================================================================
-          MODALS (Note Discovery Modal, Notes Journal, 100% Victory Certificate)
+          FOOTER: DESKTOP ONLY (Completely removed on mobile)
          =================================================================== */}
+      {!deviceInfo.isMobile && (
+        <footer className="sticky bottom-0 z-30 flex shrink-0 items-center justify-between border-t border-amber-500/20 bg-[#110e19]/95 px-2 py-1.5 text-[10px] sm:text-xs text-amber-200/80 w-full">
+          <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+            <Compass className="h-3 w-3 shrink-0 text-orange-400" />
+            <span className="font-arcade text-[8px] sm:text-[9px] tabular-nums text-amber-300/90 shrink-0">
+              ({playerPos.x}, {playerPos.y})
+            </span>
+            <span aria-hidden="true" className="shrink-0">·</span>
+            <span className="truncate">
+              {nearbyObject ? (
+                <>
+                  <strong className="text-pink-300">
+                    Near: {nearbyObject.name}
+                  </strong>
+                  <span className="text-amber-300/80 hidden sm:inline"> · press [space] to inspect</span>
+                </>
+              ) : (
+                <span className="truncate">arrows or tap canvas to walk</span>
+              )}
+            </span>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResetGame}
+              className="arcade-btn px-2 py-0.5 sm:px-2.5 rounded text-[8px] sm:text-[9px] font-arcade tracking-wider text-rose-300/80 hover:text-rose-100 hover:bg-rose-950/70 border border-rose-500/30 transition-colors uppercase whitespace-nowrap"
+              title="Reset game and set notes found to 0"
+            >
+              RESET GAME
+            </button>
+          </div>
+        </footer>
+      )}
+
+      {/* ===================================================================
+          MODALS (Welcome Modal, Note Discovery, Journal, 100% Victory)
+         =================================================================== */}
+      {isWelcomeOpen && !deviceInfo.isPortrait && (
+        <WelcomeModal onStart={handleStartGame} />
+      )}
+
       {activeNoteObject && (
         <NoteModal
           object={activeNoteObject}
@@ -644,37 +709,6 @@ export default function App() {
           onKeepExploring={() => setIsVictoryOpen(false)}
           onResetGame={handleResetGame}
         />
-      )}
-
-      {/* ===================================================================
-          MOBILE PORTRAIT ENFORCEMENT OVERLAY (Landscape Only)
-         =================================================================== */}
-      {isPortraitMobile && (
-        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#0d0914] p-6 text-center text-amber-100 backdrop-blur-md">
-          <div className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-pink-500/50 bg-pink-950/80 p-4 shadow-[0_0_40px_rgba(244,114,182,0.4)]">
-            <RotateCw className="h-12 w-12 animate-spin text-pink-400 duration-[4000ms]" />
-            <Smartphone className="absolute h-10 w-10 text-amber-300 animate-pulse" />
-          </div>
-
-          <h2 className="mb-2 font-arcade text-sm sm:text-base text-pink-300 drop-shadow-[0_2px_10px_rgba(244,114,182,0.6)]">
-            PLEASE ROTATE DEVICE
-          </h2>
-          <p className="mb-2 font-jp-pixel text-base text-pink-200/90">
-            画面を横向きにしてください
-          </p>
-          <p className="max-w-xs font-note text-xs text-amber-200/80 mb-6 leading-relaxed">
-            Shaily's Midnight Matsuri is designed strictly for horizontal (landscape) mode. Please turn your phone sideways to play!
-          </p>
-
-          <button
-            type="button"
-            onClick={handleForceLandscape}
-            className="arcade-btn flex items-center gap-2 rounded-xl border border-pink-400/60 bg-gradient-to-r from-pink-600 to-purple-700 px-5 py-3 font-arcade text-xs text-white shadow-[0_0_25px_rgba(236,72,153,0.5)] active:scale-95"
-          >
-            <RotateCw className="h-4 w-4" />
-            <span>SWITCH TO LANDSCAPE</span>
-          </button>
-        </div>
       )}
     </div>
   );
