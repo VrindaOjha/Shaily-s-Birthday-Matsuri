@@ -1,0 +1,376 @@
+export type LightingMode = 'day' | 'dusk' | 'night';
+
+export type PaperStyle =
+  | 'ramen-stained'
+  | 'thermal-receipt'
+  | 'mulberry-omikuji'
+  | 'vintage-postcard'
+  | 'basket-memo'
+  | 'gachapon-slip'
+  | 'phone-log'
+  | 'cedar-diary'
+  | 'burnt-parchment'
+  | 'station-log';
+
+export interface WorldObject {
+  id: number;
+  name: string;
+  nameJp: string;
+  zone: 'North: Shrine & Shops' | 'Center: Main Street' | 'South: Plaza & Railway';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hasNote: boolean;
+  playsCatSound?: boolean;
+  playsVampireSound?: boolean;
+  playsCheerSound?: boolean;
+  noteId?: number;
+  sender?: string;
+  noteTitle?: string;
+  noteTitleJp?: string;
+  year?: string;
+  lore?: string;
+  signature?: string;
+  locationClue?: string;
+  paperStyle?: PaperStyle;
+}
+
+export const WORLD_WIDTH = 1000;
+export const WORLD_HEIGHT = 720;
+export const SKY_OFFSET = 80;
+export const PLAY_AREA_HEIGHT = 640;
+export const INTERACT_RADIUS = 56;
+
+export const WORLD_OBJECTS: WorldObject[] = [
+  // ===========================================================================
+  // A. THE 10 OBJECTS HIDING NOTES (Display Note Modal + 8-Bit Fanfare)
+  // ===========================================================================
+  {
+    id: 1,
+    name: "Jack-o'-Lantern Chōchin",
+    nameJp: '提灯ジャック・オー・ランタン',
+    zone: 'North: Shrine & Shops',
+    x: 410,
+    y: 158,
+    width: 36,
+    height: 44,
+    hasNote: true,
+    noteId: 1,
+    sender: 'SIMRAN',
+    noteTitle: "Saileeeee's Birthday Note",
+    noteTitleJp: 'サイリーの誕生日メッセージ',
+    year: 'October 31, 2026',
+    lore: 'Saileeeee, \n\nYou might be the love of Chichu’s life, but hum bhi tere deewane hai 😚\n\nWishing you the happiest birthday! May you keep outrunning every goal in life and love every mile of it ❤️',
+    signature: '— Simran',
+    locationClue: 'Warmth sways in the autumn wind beneath the dark timber eaves where noodles steam.',
+    paperStyle: 'ramen-stained',
+  },
+  {
+    id: 2,
+    name: 'Spooky Monster Vending Machine',
+    nameJp: 'お化け自動販売機',
+    zone: 'Center: Main Street',
+    x: 275,
+    y: 235,
+    width: 48,
+    height: 68,
+    hasNote: true,
+    noteId: 2,
+    sender: 'SURABHI',
+    noteTitle: 'Hiiiii Shaillyyyyyy',
+    noteTitleJp: 'スライからのメッセージ',
+    year: 'October 31, 2026',
+    lore: "Been more than 10 years since I started popping in front of you with a 'Hi' and yapping endlessly haha :p \nBig fat Happy Birthday boo! I have said this quite sometimes lately, and I'll always continue to - I am in absolute awe of the person you've become and are becoming! From a shy girl to the one who travels to LIVE, I have adored your transformation! It's inspiring, to say the least! :)\nWe do fall out of touch every once in a while, but lately having our bond build again has been really lovely, and I only hope to have it that way and more :')",
+    signature: '— Surabhi',
+    locationClue: 'Humming softly along the north curb, its glowing buttons promise fizz and mystery.',
+    paperStyle: 'thermal-receipt',
+  },
+  {
+    id: 3,
+    name: 'Haunted Shrine Stone Lantern',
+    nameJp: '狐火の石灯籠',
+    zone: 'North: Shrine & Shops',
+    x: 92,
+    y: 162,
+    width: 38,
+    height: 54,
+    hasNote: true,
+    noteId: 3,
+    sender: '3½ BONGS',
+    noteTitle: 'Travels & Egg Factory Memories',
+    noteTitleJp: '3½ボングからのメッセージ',
+    year: 'October 31, 2026',
+    lore: 'Hey Shaily\nIt’s a pleasure to see you travelling the world. So proud of everything you do!!\n\nWe were remembering the first time we went to the egg factory together, and all of us gathering in your room to look at basketball boys. So much has happened since then hahaha!!\nKeep growing, travelling, posting more stories, and sharing all your adventuresss\nHappy Birthday!!!',
+    signature: '— 3½ Bongs',
+    locationClue: 'A dancing violet flame flickers inside mossy granite beside the sacred shrine pavers.',
+    paperStyle: 'mulberry-omikuji',
+  },
+  {
+    id: 4,
+    name: 'Pumpkin-Draped Red Postbox',
+    nameJp: 'かぼちゃ乗せ丸型ポスト',
+    zone: 'Center: Main Street',
+    x: 565,
+    y: 252,
+    width: 40,
+    height: 62,
+    hasNote: true,
+    noteId: 4,
+    sender: 'TAVISHI',
+    noteTitle: 'Hello Shaily ❤️',
+    noteTitleJp: 'タヴィシからのメッセージ',
+    year: 'October 31, 2026',
+    lore: 'Happiest Birthdayyy! 🎈🥳\n\nWishing you all the happiness in the world! Keep making us proud by running marathons, jo hum bas imagine hi kar sakte hain 😂❤️ Bas apni health ka bhi dhyaan rakhna, and office mein khud ko itna exhaust mat karo. I’ve seen you getting frustrated with all these things.\n\nAnd yeah, life is all about ups and downs. Ek din sab sort ho hi jaana hai, and waise bhi ek din toh sabko marna hi hai 😝 Toh kya hi kar lenge itne paise kama ke ya itni tension lekar? Baad mein yahi sochenge ki faltu mein kitna stress liya tha. So thoda overthinking kam karo, jo cheezein change nahi kar sakte unhe let go karo, and move ahead. Life is too short to take so much tension! ❤️\n\nAnd thank you for always being there for us. You’re always ready to help, bina zyada soche, and that’s something I really appreciate. ❤️ Aise hi rehna and spreading love!\n\nAnd haan, sutta phookna thoda kam karo 😂😂\n\nHave an amazing year ahead! Lots of love ❤️',
+    signature: '— Tavishi',
+    locationClue: 'Round and crimson on the main sidewalk, guarding letters beneath a grinning gourd.',
+    paperStyle: 'vintage-postcard',
+  },
+  {
+    id: 5,
+    name: 'Trick-or-Treat Mamachari Bicycle',
+    nameJp: 'お菓子満載ママチャリ',
+    zone: 'Center: Main Street',
+    x: 155,
+    y: 358,
+    width: 58,
+    height: 44,
+    hasNote: true,
+    noteId: 5,
+    sender: 'SHIVIKA',
+    noteTitle: 'Hi Shaily!',
+    noteTitleJp: 'シヴィカからのメッセージ',
+    year: 'October 31, 2026',
+    lore: 'Hi Shaily, you have always known how to strike a balance between being a go getter and doing cool things all the time. I find it really inspiring and I hope you never loose that spark! Happy birthday and never stop being the amazing person you are roomie :)',
+    signature: '— Shivika',
+    locationClue: 'Parked on two wheels near the western street corner with a wire basket full of treats.',
+    paperStyle: 'basket-memo',
+  },
+  {
+    id: 6,
+    name: 'Yokai Halloween Gachapon',
+    nameJp: '妖怪ハロウィンガチャポン',
+    zone: 'North: Shrine & Shops',
+    x: 842,
+    y: 174,
+    width: 48,
+    height: 56,
+    hasNote: true,
+    noteId: 6,
+    sender: 'PAYAL & VINAY',
+    noteTitle: 'Happy Birthday, Monkey! 🥳❤️',
+    noteTitleJp: 'パヤル＆ヴィナイからのメッセージ',
+    year: 'October 31, 2026',
+    lore: 'Happy Birthday, Monkey! 🥳❤️\n\nHope you have an amazing year filled with crazy trips, great runs, good food and questionable life decisions 😂❤️\n\nSince you love running so much, hope your friends make you work extra hard for that treasure today. Birthday hai, free mein kuch nahi milna chahiye! 😂😂\n\nHave the best one! ❤️🎂',
+    signature: '— Love, Payal & Vinay',
+    locationClue: 'Stacked plastic capsules gleam outside the 24-hour neon storefront in the northeast.',
+    paperStyle: 'gachapon-slip',
+  },
+  {
+    id: 7,
+    name: 'Flickering Halloween Phone Booth',
+    nameJp: '真夜中の公衆電話ボックス',
+    zone: 'Center: Main Street',
+    x: 912,
+    y: 268,
+    width: 48,
+    height: 76,
+    hasNote: true,
+    noteId: 7,
+    sender: 'BIRTHGIVERS & WOMBMATES',
+    noteTitle: 'Hello Shelly Pelly ❤️',
+    noteTitleJp: '家族からの愛を込めたメッセージ',
+    year: 'October 31, 2026',
+    lore: 'Hello Shelly Pelly ❤️\n\nWe are so incredibly proud of and inspired by the person you have become. We want to wish you a very, very happy birthday and a beautiful year ahead. From the day you came into our lives, you brought so much brightness, love and adventure into our family. No matter what you do, where life takes you, or how chaotic things may get, always remember that you will always have a home to come back to, a floor to sleep on, and a family standing right behind you. And that, to us, is what family truly means.\nYou have also been such a huge inspiration to all of us. You were the one who showed us that it is okay to be independent, to be brave, to step outside our comfort zones and see the world on our own terms. You started the journey of travelling, exploring and being away from home, and somewhere along the way, you made it easier for all of us to do the same. You are a big reason we are the strong and bold people we are today. We love you endlessly and are so lucky to call you ours. ❤️',
+    signature: '— Birthgivers & Wombmates',
+    locationClue: 'Behind glass walls in the eastern alley, a green payphone waits beneath a blinking tube light.',
+    paperStyle: 'phone-log',
+  },
+  {
+    id: 8,
+    name: 'Pumpkin Takoyaki Wooden Menu',
+    nameJp: 'かぼちゃたこ焼き木札メニュー',
+    zone: 'South: Plaza & Railway',
+    x: 472,
+    y: 524,
+    width: 44,
+    height: 48,
+    hasNote: true,
+    noteId: 8,
+    sender: 'VRINDA',
+    noteTitle: 'khatron ki khiladi ❤️',
+    noteTitleJp: 'ヴリンダからの詩的メッセージ',
+    year: 'October 31, 2026',
+    lore: 'khatron ki khiladi\nalmost poori pahaadi\ndoor rahein anaadi\nshaily meri full jugaadi\n\nsimmu bole chanchal mann\nchichu kehti hot badan\nshivi ki roommate from bachpan\nvrindu ka sabse anmol ratan\n\naaj jiska hai janamdin\nbanegi 100 crore ki malkin\nthoughts and prayers me har din\ndudududu max verstappen\n\nsorry for torture above, always be prepared for more. i love you babe. happy 28th <3',
+    signature: '— Vrinda',
+    locationClue: 'Fragrant cedar plaques hang beside a street cart in the southern plaza.',
+    paperStyle: 'cedar-diary',
+  },
+  {
+    id: 9,
+    name: 'Cobwebbed Sakura Park Bench',
+    nameJp: '蜘蛛の巣と紅葉の公園ベンチ',
+    zone: 'South: Plaza & Railway',
+    x: 285,
+    y: 582,
+    width: 96,
+    height: 42,
+    hasNote: true,
+    noteId: 9,
+    sender: 'MIHIR',
+    noteTitle: 'Happy birthday shailyy! ❤️❤️',
+    noteTitleJp: 'ミヒールからのメッセージ',
+    year: 'October 31, 2026',
+    lore: 'Happy birthday shailyy! ❤️❤️miss you lots have an amazing day and meet soon 🥹 i think so often about lolla and our mumbai shenanigans and miss it! I’ve probably told you this before but you’re one of, if not the only constant friend I’ve had since 2016. Regardless of any ups and downs in college life I could depend on, fall back on and enjoy with you. And even though we don’t talk as much as we did in college, I know you’ll always be there for me and I hope you know I am always there for you too. Love you and happy birthday! 💝',
+    signature: '— Mihir',
+    locationClue: 'On a long wooden bench near the witch cafe in the parklet, a wooden seat holds a glowing gourd.',
+    paperStyle: 'burnt-parchment',
+  },
+  {
+    id: 10,
+    name: 'Haunted Station Coin Locker #04',
+    nameJp: '踏切脇の四番コインロッカー',
+    zone: 'South: Plaza & Railway',
+    x: 948,
+    y: 505,
+    width: 52,
+    height: 68,
+    hasNote: true,
+    noteId: 10,
+    sender: 'ALPHA',
+    noteTitle: "Witch Attendant's Midnight Rescue Diary (1997)",
+    noteTitleJp: '駅員見習い魔女の黒猫保護日誌',
+    year: 'October 30, 1997 (Heisei 9)',
+    lore: 'Inside unlocked Locker #04 (whose key has a tiny pumpkin charm) sits a cloth-bound station logbook: "23:45 — Found a shivering black kitten mewing beside the railroad crossing ties during an autumn drizzle. Dried her paws by the heater, stitched her a miniature purple felt witch hat from my cape lining, and set up a warm cardboard box under the park maple tree. Everyone in the alley calls her Kuro-neko the Little Witch now!"',
+    signature: '— Station Attendant Ayame',
+    locationClue: 'Steel compartments stand near the rhythmic warning flashers of the southeastern railway tracks.',
+    paperStyle: 'station-log',
+  },
+
+  // ===========================================================================
+  // B. THE 10 OBJECTS WITH NO NOTES (Strictly No Modal Reaction)
+  // ===========================================================================
+  {
+    id: 11,
+    name: 'Ghost & Bat Ramen Noren Curtain',
+    nameJp: 'お化けと蝙蝠のラーメン暖簾',
+    zone: 'North: Shrine & Shops',
+    x: 495,
+    y: 162,
+    width: 64,
+    height: 42,
+    hasNote: false,
+  },
+  {
+    id: 12,
+    name: 'Spooky Bonsai with Paper Bat',
+    nameJp: '折り紙コウモリと黒松盆栽',
+    zone: 'North: Shrine & Shops',
+    x: 242,
+    y: 175,
+    width: 36,
+    height: 42,
+    hasNote: false,
+  },
+  {
+    id: 13,
+    name: 'Pumpkin-Lit Shrine Torii Gate',
+    nameJp: 'かぼちゃ灯る朱塗り鳥居',
+    zone: 'North: Shrine & Shops',
+    x: 170,
+    y: 128,
+    width: 86,
+    height: 84,
+    hasNote: false,
+  },
+  {
+    id: 14,
+    name: 'Haunted Laundromat Ghost Dryer',
+    nameJp: '回転お化けシーツ乾燥機',
+    zone: 'North: Shrine & Shops',
+    x: 748,
+    y: 165,
+    width: 56,
+    height: 62,
+    hasNote: false,
+  },
+  {
+    id: 15,
+    name: "Witch's Takoyaki Brew Pot",
+    nameJp: '魔女のぐつぐつ秘伝ソース壺',
+    zone: 'South: Plaza & Railway',
+    x: 580,
+    y: 528,
+    width: 44,
+    height: 48,
+    hasNote: false,
+  },
+  {
+    id: 16,
+    name: 'Black Witch Cat',
+    nameJp: '黒猫クロ',
+    zone: 'South: Plaza & Railway',
+    x: 160,
+    y: 580,
+    width: 44,
+    height: 44,
+    hasNote: false,
+    playsCatSound: true,
+  },
+  {
+    id: 17,
+    name: 'Crate with Candy Corn & Gourds',
+    nameJp: 'キャンディコーンと秋瓢箪の木箱',
+    zone: 'South: Plaza & Railway',
+    x: 635,
+    y: 535,
+    width: 46,
+    height: 42,
+    hasNote: false,
+  },
+  {
+    id: 18,
+    name: "Jack-o'-Lantern Manhole Cover",
+    nameJp: 'ハロウィン仕様マンホール蓋',
+    zone: 'Center: Main Street',
+    x: 485,
+    y: 342,
+    width: 46,
+    height: 32,
+    hasNote: false,
+  },
+  {
+    id: 19,
+    name: "Witch's Broom & Purple Umbrella Stand",
+    nameJp: '魔女の竹箒と紫番傘立て',
+    zone: 'North: Shrine & Shops',
+    x: 602,
+    y: 176,
+    width: 36,
+    height: 48,
+    hasNote: false,
+  },
+  {
+    id: 20,
+    name: 'Halloween Treat Pumpkin Can Bin',
+    nameJp: 'かぼちゃスマイル空き缶入れ',
+    zone: 'North: Shrine & Shops',
+    x: 928,
+    y: 178,
+    width: 38,
+    height: 50,
+    hasNote: false,
+  },
+  {
+    id: 21,
+    name: 'Count Vlad the Vampire',
+    nameJp: '吸血鬼ヴラド伯爵',
+    zone: 'Center: Main Street',
+    x: 912,
+    y: 336,
+    width: 42,
+    height: 56,
+    hasNote: false,
+    playsVampireSound: true,
+  },
+];

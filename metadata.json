@@ -1,0 +1,6 @@
+{
+  "name": "Halloween in Japan (ハロウィン・イン・ジャパン)",
+  "description": "A retro 16-bit pixel-art 2D explorable Shōwa-era Tokyo alleyway celebrating Japanese autumn folklore and a cozy Halloween festival with 20 interactive objects and 10 hidden secret notes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
